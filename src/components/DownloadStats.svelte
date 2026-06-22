@@ -6,7 +6,10 @@
 
   let { label, total, monthly, months, note = null } = $props();
 
-  const trend = $derived(computeTrend(months?.values));
+  // The last bucket is the current, still-running month — comparing it to a full
+  // previous month always skews negative. Drop it so the trend reflects the two
+  // most recent *completed* months. The graph still shows the running month.
+  const trend = $derived(computeTrend((months?.values ?? []).slice(0, -1)));
 </script>
 
 <div class="dl">
