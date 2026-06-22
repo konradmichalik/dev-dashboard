@@ -54,4 +54,17 @@
       <Sparkline labels={repo.packagist.months.labels} values={repo.packagist.months.values} />
     </div>
   {/if}
+
+  {#if repo.homebrew}
+    <div class="dl dl--brew">
+      <div class="dl__nums">
+        <span class="dl__total">
+          {compactNumber(repo.homebrew.total)}<small>🍺 Homebrew</small>
+        </span>
+        <span class="dl__sub">
+          {compactNumber(repo.homebrew.install)} Installs · {repo.homebrew.releases} Releases
+        </span>
+      </div>
+    </div>
+  {/if}
 </article>

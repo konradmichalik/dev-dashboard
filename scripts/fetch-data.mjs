@@ -21,6 +21,7 @@ import { dirname, resolve, join } from 'node:path';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LOGO_DIR = join(ROOT, 'public', 'logos');
 const OUT = join(ROOT, 'public', 'data.json');
+const HOMEBREW_URL = 'https://konradmichalik.github.io/homebrew-tap/downloads.json';
 
 const GH_TOKEN = process.env.GITHUB_TOKEN || '';
 const GH_HEADERS = {
@@ -154,6 +155,26 @@ async function packagist(pkg) {
   };
 }
 
+/** Homebrew tap download counts, keyed by "owner/repo". Empty map on failure. */
+async function fetchHomebrew() {
+  try {
+    const data = await fetchJson(HOMEBREW_URL);
+    return new Map(
+      (data.packages || []).map((p) => [
+        p.repo,
+        {
+          total: p.downloads_total ?? 0,
+          install: p.downloads_install ?? 0,
+          releases: p.releases ?? 0,
+        },
+      ]),
+    );
+  } catch (err) {
+    console.warn(`⚠ homebrew downloads: ${err.message}`);
+    return new Map();
+  }
+}
+
 async function saveLogo(slug, source) {
   if (!source) return null;
   try {
@@ -168,7 +189,7 @@ async function saveLogo(slug, source) {
   }
 }
 
-async function buildRepo(entry) {
+async function buildRepo(entry, homebrew) {
   const [owner, name] = entry.repo.split('/');
   if (!owner || !name) throw new Error(`Invalid repo "${entry.repo}" (expected owner/name)`);
   const slug = name.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
@@ -201,6 +222,7 @@ async function buildRepo(entry) {
     openIssues: gh.openIssues,
     openPrs: gh.openPrs,
     packagist: pkg,
+    homebrew: homebrew.get(entry.repo) || null,
   };
 }
 
@@ -213,11 +235,13 @@ async function main() {
   await mkdir(LOGO_DIR, { recursive: true });
   if (!GH_TOKEN) console.warn('⚠ No GITHUB_TOKEN set — using anonymous rate limits (60/h).');
 
+  const homebrew = await fetchHomebrew();
+
   const repos = [];
   for (const entry of config) {
     try {
       console.log(`• ${entry.repo}`);
-      repos.push(await buildRepo(entry));
+      repos.push(await buildRepo(entry, homebrew));
     } catch (err) {
       console.warn(`  ⚠ skipped ${entry.repo}: ${err.message}`);
     }
