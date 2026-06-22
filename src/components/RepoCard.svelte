@@ -1,13 +1,13 @@
 <script>
   import { compactNumber, relativeTime } from '../lib/format.js';
-  import { computeTrend } from '../lib/trend.js';
-  import Sparkline from './Sparkline.svelte';
-  import TrendBadge from './TrendBadge.svelte';
+  import DownloadStats from './DownloadStats.svelte';
 
   let { repo } = $props();
 
   const base = import.meta.env.BASE_URL;
-  const trend = $derived(repo.packagist ? computeTrend(repo.packagist.months?.values) : null);
+  const terNote = $derived(
+    repo.ter ? `TER ${compactNumber(repo.ter.downloads)} · ${repo.ter.versions} Versionen` : null,
+  );
 </script>
 
 <article class="card">
@@ -43,21 +43,31 @@
   <span class="card__updated">aktualisiert {relativeTime(repo.pushedAt)}</span>
 
   {#if repo.packagist}
-    <div class="dl">
-      <div class="dl__nums">
-        <span class="dl__total">
-          {compactNumber(repo.packagist.total)}<small>Packagist</small>
-        </span>
-        <span class="dl__sub">{compactNumber(repo.packagist.monthly)} / Monat</span>
-        {#if repo.ter}
-          <span class="dl__sub dl__ter">
-            TER {compactNumber(repo.ter.downloads)} · {repo.ter.versions} Versionen
-          </span>
-        {/if}
-        <TrendBadge {trend} />
-      </div>
-      <Sparkline labels={repo.packagist.months.labels} values={repo.packagist.months.values} />
-    </div>
+    <DownloadStats
+      label="Packagist"
+      total={repo.packagist.total}
+      monthly={repo.packagist.monthly}
+      months={repo.packagist.months}
+      note={terNote}
+    />
+  {/if}
+
+  {#if repo.npm}
+    <DownloadStats
+      label="npm"
+      total={repo.npm.total}
+      monthly={repo.npm.monthly}
+      months={repo.npm.months}
+    />
+  {/if}
+
+  {#if repo.pypi}
+    <DownloadStats
+      label="PyPI"
+      total={repo.pypi.total}
+      monthly={repo.pypi.monthly}
+      months={repo.pypi.months}
+    />
   {/if}
 
   {#if repo.homebrew}

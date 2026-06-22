@@ -1,10 +1,27 @@
 [
   { "repo": "konradmichalik/typo3-environment-indicator", "group": "TYPO3" },
-  { "repo": "konradmichalik/typo3-request-profiler", "group": "TYPO3" },
-  { "repo": "konradmichalik/typo3-ai-mate", "group": "TYPO3" },
-  { "repo": "konradmichalik/phpstan-typo3-preset", "group": "PHP Tools" },
-  { "repo": "konradmichalik/php-doc-block-header-fixer", "group": "PHP Tools" },
-  { "repo": "konradmichalik/php-cs-fixer-preset", "group": "PHP Tools" },
-  { "repo": "konradmichalik/php-ico-file-loader", "group": "PHP Tools" },
-  { "repo": "konradmichalik/video-killed-the-radio-star", "group": "Apps", "packagist": false }
+  {
+    "repo": "xima-media/xima-typo3-content-planner",
+    "group": "TYPO3",
+    "packagist": "xima/xima-typo3-content-planner"
+  },
+  { "repo": "konradmichalik/php-doc-block-header-fixer", "group": "PHP Libraries" },
+  {
+    "repo": "konradmichalik/weather-iconic",
+    "group": "Apps",
+    "packagist": false,
+    "npm": "weather-iconic"
+  },
+  {
+    "repo": "konradmichalik/db-sync-tool",
+    "group": "Apps",
+    "packagist": false,
+    "pypi": "db_sync_tool-kmi"
+  },
+  {
+    "repo": "konradmichalik/canopy",
+    "group": "Mac Apps",
+    "packagist": false,
+    "logo": "https://raw.githubusercontent.com/konradmichalik/canopy/main/docs/images/canopy-logo-app.svg"
+  }
 ]

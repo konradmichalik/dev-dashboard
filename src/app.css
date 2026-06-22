@@ -302,7 +302,7 @@ main {
   color: var(--muted);
 }
 
-.dl__ter {
+.dl__note {
   font-size: 0.72rem;
   color: var(--muted);
   opacity: 0.85;

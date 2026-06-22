@@ -8,7 +8,9 @@
  *   1. env REPOS_CONFIG  — JSON string (used in CI, kept in a GitHub Secret)
  *   2. ./repos.json      — local, gitignored, for dev runs
  * Format is documented in repos.example.json. Each entry:
- *   { "repo": "owner/name", "group"?: string, "logo"?: url, "packagist"?: "vendor/name" | false }
+ *   { "repo": "owner/name", "group"?: string, "logo"?: url,
+ *     "packagist"?: "vendor/name" | false, "npm"?: "pkg", "pypi"?: "pkg" }
+ * TER (TYPO3) is auto-detected from composer.json; Homebrew from the tap feed.
  *
  * GITHUB_TOKEN (optional locally, provided by Actions) lifts the rate limit and
  * is required for the search endpoint to be reliable.
@@ -142,16 +144,70 @@ async function packagist(pkg) {
   const detail = await fetchJson(`https://packagist.org/packages/${pkg}.json`);
   const dl = detail.package?.downloads || {};
   const from = monthsAgoISO(12);
+  // average=daily gives real per-day counts; average=monthly would give the
+  // per-day *average* of each month, not the monthly total. We aggregate the
+  // daily series into monthly sums ourselves so the graph matches "X / Monat".
   const stats = await fetchJson(
-    `https://packagist.org/packages/${pkg}/stats/all.json?average=monthly&from=${from}`,
+    `https://packagist.org/packages/${pkg}/stats/all.json?average=daily&from=${from}`,
   );
   const series = stats.values?.[pkg] ?? Object.values(stats.values || {})[0] ?? [];
+  const labels = stats.labels ?? [];
+  const daily = labels.map((day, i) => ({ day, downloads: series[i] ?? 0 }));
   return {
     name: pkg,
     total: dl.total ?? 0,
     monthly: dl.monthly ?? 0,
     daily: dl.daily ?? 0,
-    months: { labels: stats.labels ?? [], values: series },
+    months: monthlyFromDaily(
+      daily,
+      (d) => d.day,
+      (d) => d.downloads,
+    ),
+  };
+}
+
+/** Bucket a daily-downloads series into the last N calendar months. (pure) */
+function monthlyFromDaily(items, getDate, getCount, monthsBack = 12) {
+  const buckets = new Map();
+  for (const it of items) {
+    const ym = getDate(it).slice(0, 7);
+    buckets.set(ym, (buckets.get(ym) || 0) + getCount(it));
+  }
+  const labels = [...buckets.keys()].sort().slice(-monthsBack);
+  return { labels, values: labels.map((l) => buckets.get(l)) };
+}
+
+/** npm download stats: last 12 months total + last-month + monthly series. */
+async function npmStats(pkg) {
+  const point = await fetchJson(`https://api.npmjs.org/downloads/point/last-month/${pkg}`);
+  const range = await fetchJson(`https://api.npmjs.org/downloads/range/last-year/${pkg}`);
+  const days = range.downloads || [];
+  return {
+    total: days.reduce((s, d) => s + d.downloads, 0),
+    monthly: point.downloads || 0,
+    months: monthlyFromDaily(
+      days,
+      (d) => d.day,
+      (d) => d.downloads,
+    ),
+  };
+}
+
+/** PyPI download stats via pypistats (excluding mirrors). */
+async function pypiStats(pkg) {
+  const recent = await fetchJson(`https://pypistats.org/api/packages/${pkg}/recent`);
+  const overall = await fetchJson(
+    `https://pypistats.org/api/packages/${pkg}/overall?mirrors=false`,
+  );
+  const days = (overall.data || []).filter((d) => d.category === 'without_mirrors');
+  return {
+    total: days.reduce((s, d) => s + d.downloads, 0),
+    monthly: recent.data?.last_month || 0,
+    months: monthlyFromDaily(
+      days,
+      (d) => d.date,
+      (d) => d.downloads,
+    ),
   };
 }
 
@@ -237,6 +293,24 @@ async function buildRepo(entry, homebrew) {
     if (key) ter = await terStats(key);
   }
 
+  let npm = null;
+  if (entry.npm) {
+    try {
+      npm = await npmStats(entry.npm);
+    } catch (err) {
+      console.warn(`  ⚠ npm ${entry.npm}: ${err.message}`);
+    }
+  }
+
+  let pypi = null;
+  if (entry.pypi) {
+    try {
+      pypi = await pypiStats(entry.pypi);
+    } catch (err) {
+      console.warn(`  ⚠ pypi ${entry.pypi}: ${err.message}`);
+    }
+  }
+
   const logoSource =
     entry.logo || (await detectRepoLogo(owner, name, gh.defaultBranch)) || gh.avatar;
   const logo = await saveLogo(slug, logoSource);
@@ -255,6 +329,8 @@ async function buildRepo(entry, homebrew) {
     openPrs: gh.openPrs,
     packagist: pkg,
     ter,
+    npm,
+    pypi,
     homebrew: homebrew.get(entry.repo) || null,
   };
 }
