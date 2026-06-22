@@ -3,6 +3,7 @@
   import { loadData, groupRepos, filterRepos } from './lib/data.js';
   import { relativeTime } from './lib/format.js';
   import RepoGroup from './components/RepoGroup.svelte';
+  import ThemeToggle from './components/ThemeToggle.svelte';
 
   let status = $state('loading');
   let data = $state(null);
@@ -30,18 +31,21 @@
         <p class="updated">zuletzt aktualisiert {relativeTime(data.generatedAt)}</p>
       {/if}
     </div>
-    {#if status === 'ready'}
-      <div class="search">
-        <label class="visually-hidden" for="repo-search">Repositories durchsuchen</label>
-        <input
-          id="repo-search"
-          type="search"
-          placeholder="Suchen … (Name, Sprache, Gruppe)"
-          bind:value={query}
-          autocomplete="off"
-        />
-      </div>
-    {/if}
+    <div class="page-head__actions">
+      {#if status === 'ready'}
+        <div class="search">
+          <label class="visually-hidden" for="repo-search">Repositories durchsuchen</label>
+          <input
+            id="repo-search"
+            type="search"
+            placeholder="Suchen … (Name, Sprache, Gruppe)"
+            bind:value={query}
+            autocomplete="off"
+          />
+        </div>
+      {/if}
+      <ThemeToggle />
+    </div>
   </header>
 
   {#if status === 'loading'}
