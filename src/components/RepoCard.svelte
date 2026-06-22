@@ -39,16 +39,21 @@
       <span class="badge__n">{repo.openPrs}</span> PRs
     </a>
     <span class="badge badge--muted" title="Stars">★ {repo.stars}</span>
-    <span class="card__updated">aktualisiert {relativeTime(repo.pushedAt)}</span>
   </div>
+  <span class="card__updated">aktualisiert {relativeTime(repo.pushedAt)}</span>
 
   {#if repo.packagist}
     <div class="dl">
       <div class="dl__nums">
         <span class="dl__total">
-          {compactNumber(repo.packagist.total)}<small>gesamt</small>
+          {compactNumber(repo.packagist.total)}<small>Packagist</small>
         </span>
         <span class="dl__sub">{compactNumber(repo.packagist.monthly)} / Monat</span>
+        {#if repo.ter}
+          <span class="dl__sub dl__ter">
+            TER {compactNumber(repo.ter.downloads)} · {repo.ter.versions} Versionen
+          </span>
+        {/if}
         <TrendBadge {trend} />
       </div>
       <Sparkline labels={repo.packagist.months.labels} values={repo.packagist.months.values} />

@@ -155,6 +155,35 @@ async function packagist(pkg) {
   };
 }
 
+const TER_API = 'https://extensions.typo3.org/api/v1/extension';
+
+/** TYPO3 extension key from composer.json (extra.typo3/cms.extension-key), or null. */
+async function extensionKey(owner, name, branch) {
+  try {
+    const res = await fetch(
+      `https://raw.githubusercontent.com/${owner}/${name}/${branch}/composer.json`,
+      { headers: { 'User-Agent': 'dev-dashboard' } },
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.extra?.['typo3/cms']?.['extension-key'] || null;
+  } catch {
+    return null;
+  }
+}
+
+/** TYPO3 Extension Repository download count, or null if the ext isn't on TER. */
+async function terStats(key) {
+  try {
+    const data = await fetchJson(`${TER_API}/${key}`);
+    const ext = Array.isArray(data) ? data[0] : data;
+    if (!ext) return null;
+    return { downloads: ext.downloads ?? 0, versions: ext.version_count ?? 0 };
+  } catch {
+    return null; // 404 = not published to TER
+  }
+}
+
 /** Homebrew tap download counts, keyed by "owner/repo". Empty map on failure. */
 async function fetchHomebrew() {
   try {
@@ -196,6 +225,7 @@ async function buildRepo(entry, homebrew) {
   const gh = await githubRepo(owner, name);
 
   let pkg = null;
+  let ter = null;
   if (entry.packagist !== false) {
     const pkgName = typeof entry.packagist === 'string' ? entry.packagist : entry.repo;
     try {
@@ -203,6 +233,8 @@ async function buildRepo(entry, homebrew) {
     } catch (err) {
       console.warn(`  ⚠ packagist ${pkgName}: ${err.message}`);
     }
+    const key = await extensionKey(owner, name, gh.defaultBranch);
+    if (key) ter = await terStats(key);
   }
 
   const logoSource =
@@ -222,6 +254,7 @@ async function buildRepo(entry, homebrew) {
     openIssues: gh.openIssues,
     openPrs: gh.openPrs,
     packagist: pkg,
+    ter,
     homebrew: homebrew.get(entry.repo) || null,
   };
 }

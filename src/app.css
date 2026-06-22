@@ -259,7 +259,8 @@ main {
 }
 
 .card__updated {
-  flex: 1 0 100%;
+  display: block;
+  margin-top: -0.45rem;
   text-align: right;
   font-size: 0.74rem;
   color: var(--muted);
@@ -299,6 +300,11 @@ main {
 .dl__sub {
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+.dl__ter {
+  color: #f49700;
+  font-weight: 600;
 }
 
 /* trend */
