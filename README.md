@@ -10,10 +10,15 @@ Packagist downloads, download trend and a per-package monthly graph.
 > [!IMPORTANT]
 > This package is intended for use in my personal projects only. It is not designed for general use.
 
-## Configuration
+## ⚙️ Configuration
 
 The curated repo list lives in the **GitHub secret `REPOS_CONFIG`** (JSON) — so the
-project stays forkable without committing your own list. See [`repos.example.json`](./repos.example.json) for the format:
+project stays forkable without committing your own list.
+
+> [!TIP]
+> See [`repos.example.json`](./repos.example.json) for the full format reference.
+
+Example entry:
 
 ```json
 [
@@ -22,7 +27,7 @@ project stays forkable without committing your own list. See [`repos.example.jso
 ]
 ```
 
-## Development
+## 🚀 Development
 
 ```bash
 npm install
@@ -31,8 +36,12 @@ GITHUB_TOKEN=$(gh auth token) npm run fetch  # creates public/data.json + public
 npm run dev                                  # http://localhost:5174
 ```
 
-## Quality
+## 🔥 Quality
 
 ```bash
 npm run lint && npm run check && npm test && npm run build
 ```
+
+## 📜 License
+
+This project is licensed under [GNU General Public License 3.0 (or later)](LICENSE).
