@@ -303,8 +303,9 @@ main {
 }
 
 .dl__ter {
-  color: #f49700;
-  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--muted);
+  opacity: 0.85;
 }
 
 /* trend */
