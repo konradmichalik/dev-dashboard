@@ -252,12 +252,22 @@ async function extensionKey(owner, name, branch) {
   }
 }
 
-/** TYPO3 Extension Repository download count, or null if the ext isn't on TER. */
-async function terStats(key) {
+/**
+ * TYPO3 Extension Repository download count, or null if the ext isn't on TER.
+ * Extension keys are global on TER — a fork can carry a key already owned by an
+ * unrelated extension. Cross-check TER's composer name against ours and bail if
+ * they disagree, so we don't attribute someone else's downloads to this repo.
+ */
+async function terStats(key, expectedPackage) {
   try {
     const data = await fetchJson(`${TER_API}/${key}`);
     const ext = Array.isArray(data) ? data[0] : data;
     if (!ext) return null;
+    const owner = ext.meta?.composer_name;
+    if (owner && owner.toLowerCase() !== expectedPackage.toLowerCase()) {
+      console.warn(`  ⚠ TER key "${key}" belongs to ${owner}, not ${expectedPackage} — skipping`);
+      return null;
+    }
     return { downloads: ext.downloads ?? 0, versions: ext.version_count ?? 0 };
   } catch {
     return null; // 404 = not published to TER
@@ -315,7 +325,7 @@ async function buildRepo(entry, homebrew) {
       console.warn(`  ⚠ packagist ${pkgName}: ${err.message}`);
     }
     const key = await extensionKey(owner, name, gh.defaultBranch);
-    if (key) ter = await terStats(key);
+    if (key) ter = await terStats(key, pkgName);
   }
 
   let npm = null;
