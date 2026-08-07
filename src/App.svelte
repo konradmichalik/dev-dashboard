@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { loadData, groupRepos, filterRepos } from './lib/data.js';
+  import { loadData, groupRepos, filterRepos, sortRepos, SORT_OPTIONS } from './lib/data.js';
   import { relativeTime } from './lib/format.js';
   import RepoGroup from './components/RepoGroup.svelte';
   import ThemeToggle from './components/ThemeToggle.svelte';
@@ -9,8 +9,16 @@
   let data = $state(null);
   let error = $state('');
   let query = $state('');
+  let sortBy = $state('downloads');
 
-  const groups = $derived(data ? groupRepos(filterRepos(data.repos, query)) : []);
+  const groups = $derived(
+    data
+      ? groupRepos(filterRepos(data.repos, query)).map((g) => ({
+          ...g,
+          repos: sortRepos(g.repos, sortBy),
+        }))
+      : [],
+  );
 
   onMount(async () => {
     try {
@@ -42,6 +50,14 @@
             bind:value={query}
             autocomplete="off"
           />
+        </div>
+        <div class="sort">
+          <label class="visually-hidden" for="repo-sort">Sortieren nach</label>
+          <select id="repo-sort" bind:value={sortBy}>
+            {#each SORT_OPTIONS as option (option.key)}
+              <option value={option.key}>{option.label}</option>
+            {/each}
+          </select>
         </div>
       {/if}
       <ThemeToggle />

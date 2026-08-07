@@ -105,6 +105,30 @@ async function githubRepo(owner, name) {
   };
 }
 
+/** Latest GitHub release (falls back to the newest tag). Returns null if neither exists. */
+async function latestRelease(owner, name) {
+  try {
+    const rel = await fetchJson(
+      `https://api.github.com/repos/${owner}/${name}/releases/latest`,
+      GH_HEADERS,
+    );
+    return { tag: rel.tag_name, url: rel.html_url, publishedAt: rel.published_at };
+  } catch {
+    // no releases published — fall back to the newest tag
+  }
+  try {
+    const tags = await fetchJson(
+      `https://api.github.com/repos/${owner}/${name}/tags?per_page=1`,
+      GH_HEADERS,
+    );
+    const tag = tags[0];
+    if (!tag) return null;
+    return { tag: tag.name, url: `https://github.com/${owner}/${name}/releases/tag/${tag.name}`, publishedAt: null };
+  } catch {
+    return null;
+  }
+}
+
 // Common in-repo logo locations, SVG preferred. TYPO3 extensions ship an
 // Extension icon; other projects sometimes keep a logo under docs/art/assets.
 const LOGO_CANDIDATES = [
@@ -279,6 +303,7 @@ async function buildRepo(entry, homebrew) {
   if (!owner || !name) throw new Error(`Invalid repo "${entry.repo}" (expected owner/name)`);
   const slug = name.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
   const gh = await githubRepo(owner, name);
+  const release = await latestRelease(owner, name);
 
   let pkg = null;
   let ter = null;
@@ -323,6 +348,7 @@ async function buildRepo(entry, homebrew) {
     language: gh.language,
     group: entry.group || 'Sonstige',
     logo,
+    release,
     pushedAt: gh.pushedAt,
     stars: gh.stars,
     openIssues: gh.openIssues,

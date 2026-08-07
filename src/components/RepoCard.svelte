@@ -23,7 +23,20 @@
       <h3>
         <a href={repo.url} target="_blank" rel="noopener noreferrer">{repo.name}</a>
       </h3>
-      {#if repo.language}<span class="card__lang">{repo.language}</span>{/if}
+      <div class="card__title-meta">
+        {#if repo.language}<span class="card__lang">{repo.language}</span>{/if}
+        {#if repo.release}
+          <a
+            class="card__version"
+            href={repo.release.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Neueste Version"
+          >
+            {repo.release.tag}
+          </a>
+        {/if}
+      </div>
     </div>
   </header>
 
