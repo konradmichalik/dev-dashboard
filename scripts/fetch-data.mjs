@@ -130,7 +130,8 @@ async function latestRelease(owner, name) {
 }
 
 // Common in-repo logo locations, SVG preferred. TYPO3 extensions ship an
-// Extension icon; other projects sometimes keep a logo under docs/art/assets.
+// Extension icon; other projects sometimes keep a logo under docs/art/assets;
+// most plain PHP packages ship a root-level icon.png.
 const LOGO_CANDIDATES = [
   'Resources/Public/Icons/Extension.svg',
   'ext_icon.svg',
@@ -142,6 +143,7 @@ const LOGO_CANDIDATES = [
   'Resources/Public/Icons/Extension.png',
   'ext_icon.png',
   'ext_icon.gif',
+  'icon.png',
 ];
 
 /** Find a logo committed in the repo; returns a raw URL or null. */
